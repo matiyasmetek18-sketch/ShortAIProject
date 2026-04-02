@@ -82,6 +82,13 @@ Health check:
 http://localhost:3000/health
 ```
 
+If you want to run the API directly without Vercel:
+
+```bash
+pip install -r requirements.txt
+uvicorn api.main:app --reload
+```
+
 ### Production deploy
 
 ```bash

@@ -1,11 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "api/*.py": {
-      "maxDuration": 30,
-      "excludeFiles": "{__pycache__/**,sample_*,netlify/**,.git/**}"
-    }
-  },
   "routes": [
     {
       "src": "/(.*)",
