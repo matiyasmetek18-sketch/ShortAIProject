@@ -1,0 +1,1 @@
+We are hiring a Junior Software Engineer with experience in Python, SQL, REST APIs, Git, testing, and AWS. You will build backend services, write clean code, work with PostgreSQL, and apply data structures and algorithms.
