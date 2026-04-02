@@ -3,7 +3,7 @@
 This project helps early-career software engineers generate a tailored learning plan for a specific company and role. It now includes:
 
 - A Python CLI for local use
-- A Vercel-ready Python serverless API in `api/main.py`
+- A Vercel-ready Python web app and API in `api/main.py`
 - A Netlify-ready proxy function in `netlify/functions/main.mjs`
 
 ## What it does
@@ -31,11 +31,15 @@ python3 main.py "Stripe" "Junior Software Engineer"
 python3 main.py "Figma" "Frontend Engineer" --job-url "https://boards.greenhouse.io/figma/jobs/1234567"
 ```
 
-### Vercel function
+### Web app
 
-`GET /?company=Stripe&role=Junior%20Software%20Engineer`
+Open `/` in the browser for the interactive interface.
 
-`POST /` with JSON:
+### API
+
+`GET /api/generate?company=Stripe&role=Junior%20Software%20Engineer`
+
+`POST /api/generate` with JSON:
 
 ```json
 {
@@ -80,6 +84,12 @@ Health check:
 
 ```bash
 http://localhost:3000/health
+```
+
+API test:
+
+```bash
+http://localhost:3000/api/generate?company=Stripe&role=Junior%20Software%20Engineer
 ```
 
 If you want to run the API directly without Vercel:

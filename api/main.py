@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from learning_plan.service import PlanGenerationError, generate_plan, plan_to_dict
+from learning_plan.web import render_app_html
 
 
 class PlanRequest(BaseModel):
@@ -45,8 +47,13 @@ def _build_plan(company: str, role: str, job_url: str | None = None, job_text: s
     return plan_to_dict(plan)
 
 
-@app.get("/")
-def root(
+@app.get("/", response_class=HTMLResponse)
+def home() -> str:
+    return render_app_html()
+
+
+@app.get("/api/generate")
+def generate_get(
     company: str,
     role: str,
     job_url: str | None = None,
@@ -60,8 +67,8 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-@app.post("/")
-def generate(request: PlanRequest) -> dict:
+@app.post("/api/generate")
+def generate_post(request: PlanRequest) -> dict:
     return _build_plan(
         company=request.company,
         role=request.role,
