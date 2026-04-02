@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from .job_fetcher import JobFetcher, JobSearchError
 from .models import JobPosting, LearningPlan
@@ -36,6 +36,7 @@ def generate_plan(
     job_url: Optional[str] = None,
     job_file: Optional[str] = None,
     job_text: Optional[str] = None,
+    current_skills: Optional[List[str]] = None,
 ) -> LearningPlan:
     if not company or not role:
         raise PlanGenerationError('Both "company" and "role" are required.')
@@ -61,7 +62,8 @@ def generate_plan(
             "Try providing a more detailed job description with --job-file or request body."
         )
 
-    return build_learning_plan(job, skills)
+    normalized_current_skills = [skill.strip() for skill in (current_skills or []) if skill.strip()]
+    return build_learning_plan(job, skills, current_skills=normalized_current_skills)
 
 
 def plan_to_dict(plan: LearningPlan) -> Dict[str, Any]:
@@ -77,6 +79,41 @@ def plan_to_dict(plan: LearningPlan) -> Dict[str, Any]:
         },
         "summary": plan.summary,
         "phases": plan.phases,
+        "gap_analysis": {
+            "current_skills": plan.gap_analysis.current_skills,
+            "matched_skills": plan.gap_analysis.matched_skills,
+            "missing_skills": plan.gap_analysis.missing_skills,
+            "adjacent_skills": plan.gap_analysis.adjacent_skills,
+            "coverage_score": plan.gap_analysis.coverage_score,
+            "narrative": plan.gap_analysis.narrative,
+        },
+        "roadmap": [
+            {
+                "label": stage.label,
+                "objective": stage.objective,
+                "deliverables": stage.deliverables,
+            }
+            for stage in plan.roadmap
+        ],
+        "capstone": {
+            "title": plan.capstone.title,
+            "pitch": plan.capstone.pitch,
+            "outcomes": plan.capstone.outcomes,
+            "milestones": plan.capstone.milestones,
+        },
+        "interview_prep": {
+            "technical_focus": plan.interview_prep.technical_focus,
+            "behavioral_focus": plan.interview_prep.behavioral_focus,
+            "practice_prompts": plan.interview_prep.practice_prompts,
+        },
+        "resume_bullets": [
+            {
+                "bullet": item.bullet,
+                "evidence": item.evidence,
+            }
+            for item in plan.resume_bullets
+        ],
+        "standout_moves": plan.standout_moves,
         "skills": [
             {
                 "skill": skill.skill,

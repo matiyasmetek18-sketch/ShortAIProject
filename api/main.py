@@ -14,6 +14,7 @@ class PlanRequest(BaseModel):
     role: str
     job_url: str | None = None
     job_text: str | None = None
+    current_skills: list[str] | None = None
 
 
 app = FastAPI(
@@ -31,14 +32,26 @@ app.add_middleware(
 )
 
 
-def _build_plan(company: str, role: str, job_url: str | None = None, job_text: str | None = None) -> dict:
+def _build_plan(
+    company: str,
+    role: str,
+    job_url: str | None = None,
+    job_text: str | None = None,
+    current_skills: list[str] | None = None,
+) -> dict:
     company = company.strip()
     role = role.strip()
     if not company or not role:
         raise HTTPException(status_code=400, detail='Both "company" and "role" are required.')
 
     try:
-        plan = generate_plan(company=company, role=role, job_url=job_url, job_text=job_text)
+        plan = generate_plan(
+            company=company,
+            role=role,
+            job_url=job_url,
+            job_text=job_text,
+            current_skills=current_skills,
+        )
     except PlanGenerationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
@@ -58,8 +71,16 @@ def generate_get(
     role: str,
     job_url: str | None = None,
     job_text: str | None = None,
+    current_skills: str | None = None,
 ) -> dict:
-    return _build_plan(company=company, role=role, job_url=job_url, job_text=job_text)
+    parsed_skills = [item.strip() for item in current_skills.split(",")] if current_skills else None
+    return _build_plan(
+        company=company,
+        role=role,
+        job_url=job_url,
+        job_text=job_text,
+        current_skills=parsed_skills,
+    )
 
 
 @app.get("/health")
@@ -74,4 +95,5 @@ def generate_post(request: PlanRequest) -> dict:
         role=request.role,
         job_url=request.job_url,
         job_text=request.job_text,
+        current_skills=request.current_skills,
     )

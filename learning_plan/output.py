@@ -20,6 +20,33 @@ def render_console(plan: LearningPlan) -> str:
     for phase in plan.phases:
         lines.append(f"- {phase}")
 
+    lines.extend(
+        [
+            "",
+            "Gap Analysis",
+            f"- Coverage score: {plan.gap_analysis.coverage_score}%",
+            f"- Current strengths: {', '.join(plan.gap_analysis.matched_skills) or 'Not provided yet'}",
+            f"- Priority gaps: {', '.join(plan.gap_analysis.missing_skills[:5]) or 'None detected'}",
+            f"- Narrative: {plan.gap_analysis.narrative}",
+            "",
+            "7 / 30 / 90 Day Roadmap",
+        ]
+    )
+    for stage in plan.roadmap:
+        lines.append(f"- {stage.label}: {stage.objective}")
+        for deliverable in stage.deliverables:
+            lines.append(f"  - {deliverable}")
+
+    lines.extend(
+        [
+            "",
+            f"Capstone Project: {plan.capstone.title}",
+            fill(plan.capstone.pitch, width=100),
+        ]
+    )
+    for milestone in plan.capstone.milestones:
+        lines.append(f"- {milestone}")
+
     lines.append("")
     lines.append("Skill-by-Skill Plan")
     for item in plan.skills:
@@ -54,6 +81,58 @@ def render_markdown(plan: LearningPlan) -> str:
     ]
     for phase in plan.phases:
         lines.append(f"- {phase}")
+
+    lines.extend(
+        [
+            "",
+            "## Gap Analysis",
+            f"- Coverage score: {plan.gap_analysis.coverage_score}%",
+            f"- Current strengths: {', '.join(plan.gap_analysis.matched_skills) or 'Not provided yet'}",
+            f"- Priority gaps: {', '.join(plan.gap_analysis.missing_skills[:5]) or 'None detected'}",
+            f"- Guidance: {plan.gap_analysis.narrative}",
+            "",
+            "## 7 / 30 / 90 Day Roadmap",
+        ]
+    )
+    for stage in plan.roadmap:
+        lines.append(f"### {stage.label}")
+        lines.append(stage.objective)
+        for deliverable in stage.deliverables:
+            lines.append(f"- {deliverable}")
+        lines.append("")
+
+    lines.extend(
+        [
+            "## Capstone Project",
+            f"### {plan.capstone.title}",
+            plan.capstone.pitch,
+            "",
+            "#### Outcomes",
+        ]
+    )
+    for outcome in plan.capstone.outcomes:
+        lines.append(f"- {outcome}")
+    lines.append("")
+    lines.append("#### Milestones")
+    for milestone in plan.capstone.milestones:
+        lines.append(f"- {milestone}")
+
+    lines.extend(["", "## Interview Prep"])
+    for item in plan.interview_prep.technical_focus:
+        lines.append(f"- Technical: {item}")
+    for item in plan.interview_prep.behavioral_focus:
+        lines.append(f"- Behavioral: {item}")
+    for item in plan.interview_prep.practice_prompts:
+        lines.append(f"- Prompt: {item}")
+
+    lines.extend(["", "## Resume Bullets"])
+    for item in plan.resume_bullets:
+        lines.append(f"- {item.bullet}")
+        lines.append(f"  - Evidence to add: {item.evidence}")
+
+    lines.extend(["", "## Standout Moves"])
+    for move in plan.standout_moves:
+        lines.append(f"- {move}")
 
     lines.append("")
     lines.append("## Skill-by-Skill Plan")

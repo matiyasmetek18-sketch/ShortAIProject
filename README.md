@@ -11,6 +11,9 @@ This project helps early-career software engineers generate a tailored learning 
 - Searches public job postings for a company and role
 - Extracts skills, tools, and core engineering concepts from the posting
 - Builds a step-by-step learning plan with free resources
+- Compares the target role against the candidate's current skills
+- Generates a 7-day, 30-day, and 90-day roadmap
+- Recommends a company-aligned capstone project, resume bullets, and interview prep
 - Prints the plan in the console and can save it as Markdown or PDF
 
 ## Quick start
@@ -29,6 +32,7 @@ python3 main.py "Stripe" "Junior Software Engineer" --markdown stripe_plan.md
 ```bash
 python3 main.py "Stripe" "Junior Software Engineer"
 python3 main.py "Figma" "Frontend Engineer" --job-url "https://boards.greenhouse.io/figma/jobs/1234567"
+python3 main.py "Stripe" "Junior Software Engineer" --job-file sample_job.txt --current-skills "Python, Git, SQL"
 ```
 
 ### Web app
@@ -45,7 +49,8 @@ Open `/` in the browser for the interactive interface.
 {
   "company": "Stripe",
   "role": "Junior Software Engineer",
-  "job_url": "https://boards.greenhouse.io/example/jobs/123456"
+  "job_url": "https://boards.greenhouse.io/example/jobs/123456",
+  "current_skills": ["Python", "Git", "SQL"]
 }
 ```
 
@@ -77,7 +82,7 @@ vercel dev
 Then open:
 
 ```bash
-http://localhost:3000/?company=Stripe&role=Junior%20Software%20Engineer
+http://localhost:3000/
 ```
 
 Health check:

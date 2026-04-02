@@ -14,6 +14,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("role", help='Role title, for example "Junior Software Engineer"')
     parser.add_argument("--job-url", help="Optional direct link to a public job posting")
     parser.add_argument("--job-file", help="Optional local file containing a job description")
+    parser.add_argument("--current-skills", help="Optional comma-separated list of current skills")
     parser.add_argument("--markdown", help="Optional path to save the plan as Markdown")
     parser.add_argument("--pdf", help="Optional path to save the plan as PDF")
     return parser.parse_args()
@@ -27,6 +28,7 @@ def main() -> int:
             role=args.role,
             job_url=args.job_url,
             job_file=args.job_file,
+            current_skills=(args.current_skills.split(",") if args.current_skills else []),
         )
     except PlanGenerationError as exc:
         print(f"Error: {exc}")
