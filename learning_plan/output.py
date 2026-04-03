@@ -29,6 +29,18 @@ def render_console(plan: LearningPlan) -> str:
             f"- Priority gaps: {', '.join(plan.gap_analysis.missing_skills[:5]) or 'None detected'}",
             f"- Narrative: {plan.gap_analysis.narrative}",
             "",
+            f"Weekly Execution Plan ({plan.weekly_schedule.intensity}, {plan.weekly_schedule.hours_per_week} hrs/week)",
+            f"- {plan.weekly_schedule.headline}",
+        ]
+    )
+    for session in plan.weekly_schedule.sessions:
+        lines.append(f"- {session.day}: {session.focus} ({session.duration})")
+        for task in session.tasks:
+            lines.append(f"  - {task}")
+
+    lines.extend(
+        [
+            "",
             "7 / 30 / 90 Day Roadmap",
         ]
     )
@@ -46,6 +58,14 @@ def render_console(plan: LearningPlan) -> str:
     )
     for milestone in plan.capstone.milestones:
         lines.append(f"- {milestone}")
+
+    lines.extend(["", "Fit Signals", f"- Company signal: {plan.fit_signals.company_signal}", f"- Hiring story: {plan.fit_signals.hiring_story}"])
+    for item in plan.fit_signals.strengths:
+        lines.append(f"- Strength: {item}")
+    for item in plan.fit_signals.risks:
+        lines.append(f"- Risk: {item}")
+
+    lines.extend(["", "Application Assets", f"- Elevator pitch: {plan.application_assets.elevator_pitch}", f"- Outreach note: {plan.application_assets.outreach_note}", f"- Portfolio headline: {plan.application_assets.portfolio_headline}"])
 
     lines.append("")
     lines.append("Skill-by-Skill Plan")
@@ -91,9 +111,20 @@ def render_markdown(plan: LearningPlan) -> str:
             f"- Priority gaps: {', '.join(plan.gap_analysis.missing_skills[:5]) or 'None detected'}",
             f"- Guidance: {plan.gap_analysis.narrative}",
             "",
+            "## Weekly Execution Plan",
+            f"- Intensity: {plan.weekly_schedule.intensity}",
+            f"- Hours per week: {plan.weekly_schedule.hours_per_week}",
+            f"- Headline: {plan.weekly_schedule.headline}",
+            "",
             "## 7 / 30 / 90 Day Roadmap",
         ]
     )
+    for session in plan.weekly_schedule.sessions:
+        lines.append(f"### {session.day}: {session.focus} ({session.duration})")
+        for task in session.tasks:
+            lines.append(f"- {task}")
+        lines.append("")
+
     for stage in plan.roadmap:
         lines.append(f"### {stage.label}")
         lines.append(stage.objective)
@@ -124,6 +155,21 @@ def render_markdown(plan: LearningPlan) -> str:
         lines.append(f"- Behavioral: {item}")
     for item in plan.interview_prep.practice_prompts:
         lines.append(f"- Prompt: {item}")
+
+    lines.extend(["", "## Interview Bank"])
+    for topic in plan.interview_bank:
+        lines.append(f"### {topic.topic}")
+        for question in topic.questions:
+            lines.append(f"- {question}")
+        lines.append("")
+
+    lines.extend(["## Fit Signals", f"- Company signal: {plan.fit_signals.company_signal}", f"- Hiring story: {plan.fit_signals.hiring_story}"])
+    for item in plan.fit_signals.strengths:
+        lines.append(f"- Strength: {item}")
+    for item in plan.fit_signals.risks:
+        lines.append(f"- Risk: {item}")
+
+    lines.extend(["", "## Application Assets", f"- Elevator pitch: {plan.application_assets.elevator_pitch}", f"- Outreach note: {plan.application_assets.outreach_note}", f"- Portfolio headline: {plan.application_assets.portfolio_headline}"])
 
     lines.extend(["", "## Resume Bullets"])
     for item in plan.resume_bullets:

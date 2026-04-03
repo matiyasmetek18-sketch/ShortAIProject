@@ -13,7 +13,9 @@ This project helps early-career software engineers generate a tailored learning 
 - Builds a step-by-step learning plan with free resources
 - Compares the target role against the candidate's current skills
 - Generates a 7-day, 30-day, and 90-day roadmap
-- Recommends a company-aligned capstone project, resume bullets, and interview prep
+- Generates a weekly study schedule based on intensity and hours per week
+- Recommends a company-aligned capstone project, resume bullets, interview prep, and recruiter-ready application assets
+- Includes fit signals, outreach copy, interview question bank, and markdown export from the web UI
 - Prints the plan in the console and can save it as Markdown or PDF
 
 ## Quick start
@@ -33,6 +35,7 @@ python3 main.py "Stripe" "Junior Software Engineer" --markdown stripe_plan.md
 python3 main.py "Stripe" "Junior Software Engineer"
 python3 main.py "Figma" "Frontend Engineer" --job-url "https://boards.greenhouse.io/figma/jobs/1234567"
 python3 main.py "Stripe" "Junior Software Engineer" --job-file sample_job.txt --current-skills "Python, Git, SQL"
+python3 main.py "Stripe" "Junior Software Engineer" --job-file sample_job.txt --current-skills "Python, Git, SQL" --intensity accelerated --hours-per-week 10
 ```
 
 ### Web app
@@ -50,7 +53,9 @@ Open `/` in the browser for the interactive interface.
   "company": "Stripe",
   "role": "Junior Software Engineer",
   "job_url": "https://boards.greenhouse.io/example/jobs/123456",
-  "current_skills": ["Python", "Git", "SQL"]
+  "current_skills": ["Python", "Git", "SQL"],
+  "intensity": "accelerated",
+  "hours_per_week": 10
 }
 ```
 

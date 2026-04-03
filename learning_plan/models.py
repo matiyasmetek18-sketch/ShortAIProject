@@ -74,6 +74,43 @@ class ResumeBullet:
 
 
 @dataclass
+class WeeklySession:
+    day: str
+    focus: str
+    duration: str
+    tasks: List[str] = field(default_factory=list)
+
+
+@dataclass
+class WeeklySchedule:
+    intensity: str
+    hours_per_week: int
+    headline: str
+    sessions: List[WeeklySession] = field(default_factory=list)
+
+
+@dataclass
+class FitSignals:
+    strengths: List[str] = field(default_factory=list)
+    risks: List[str] = field(default_factory=list)
+    company_signal: str = ""
+    hiring_story: str = ""
+
+
+@dataclass
+class ApplicationAssets:
+    elevator_pitch: str
+    outreach_note: str
+    portfolio_headline: str
+
+
+@dataclass
+class InterviewQuestionSet:
+    topic: str
+    questions: List[str] = field(default_factory=list)
+
+
+@dataclass
 class LearningPlan:
     job: JobPosting
     summary: str
@@ -84,4 +121,8 @@ class LearningPlan:
     capstone: CapstoneProject
     interview_prep: InterviewPrep
     resume_bullets: List[ResumeBullet]
+    weekly_schedule: WeeklySchedule
+    fit_signals: FitSignals
+    application_assets: ApplicationAssets
+    interview_bank: List[InterviewQuestionSet]
     standout_moves: List[str] = field(default_factory=list)

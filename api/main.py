@@ -15,6 +15,8 @@ class PlanRequest(BaseModel):
     job_url: str | None = None
     job_text: str | None = None
     current_skills: list[str] | None = None
+    intensity: str | None = "balanced"
+    hours_per_week: int | None = 8
 
 
 app = FastAPI(
@@ -38,6 +40,8 @@ def _build_plan(
     job_url: str | None = None,
     job_text: str | None = None,
     current_skills: list[str] | None = None,
+    intensity: str | None = "balanced",
+    hours_per_week: int | None = 8,
 ) -> dict:
     company = company.strip()
     role = role.strip()
@@ -51,6 +55,8 @@ def _build_plan(
             job_url=job_url,
             job_text=job_text,
             current_skills=current_skills,
+            intensity=intensity or "balanced",
+            hours_per_week=hours_per_week or 8,
         )
     except PlanGenerationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
@@ -72,6 +78,8 @@ def generate_get(
     job_url: str | None = None,
     job_text: str | None = None,
     current_skills: str | None = None,
+    intensity: str | None = "balanced",
+    hours_per_week: int = 8,
 ) -> dict:
     parsed_skills = [item.strip() for item in current_skills.split(",")] if current_skills else None
     return _build_plan(
@@ -80,6 +88,8 @@ def generate_get(
         job_url=job_url,
         job_text=job_text,
         current_skills=parsed_skills,
+        intensity=intensity,
+        hours_per_week=hours_per_week,
     )
 
 
@@ -96,4 +106,6 @@ def generate_post(request: PlanRequest) -> dict:
         job_url=request.job_url,
         job_text=request.job_text,
         current_skills=request.current_skills,
+        intensity=request.intensity,
+        hours_per_week=request.hours_per_week,
     )

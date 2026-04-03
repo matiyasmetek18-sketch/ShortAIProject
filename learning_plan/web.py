@@ -215,7 +215,7 @@ def render_app_html() -> str:
       font-size: 14px;
     }
 
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       border-radius: 14px;
       border: 1px solid rgba(78, 61, 44, 0.16);
@@ -226,7 +226,7 @@ def render_app_html() -> str:
       transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
 
-    input:focus, textarea:focus {
+    input:focus, textarea:focus, select:focus {
       outline: none;
       transform: translateY(-1px);
       border-color: rgba(217, 119, 6, 0.5);
@@ -245,7 +245,7 @@ def render_app_html() -> str:
       margin-top: -2px;
     }
 
-    .button-row, .chip-row {
+    .button-row, .chip-row, .tool-row {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
@@ -358,7 +358,7 @@ def render_app_html() -> str:
       gap: 18px;
     }
 
-    .pill-list, .timeline, .bullet-list, .skill-grid {
+    .pill-list, .timeline, .bullet-list, .skill-grid, .copy-grid, .session-grid, .question-grid {
       display: grid;
       gap: 12px;
       margin-top: 14px;
@@ -378,17 +378,24 @@ def render_app_html() -> str:
       font-size: 13px;
     }
 
-    .timeline-card, .bullet-card, .skill-card {
+    .timeline-card, .bullet-card, .skill-card, .copy-card, .session-card, .question-card {
       padding: 18px;
       border-radius: 18px;
       background: rgba(255, 255, 255, 0.76);
       border: 1px solid var(--line);
     }
 
-    .timeline-card strong, .bullet-card strong, .skill-card strong {
+    .timeline-card strong, .bullet-card strong, .skill-card strong, .copy-card strong, .session-card strong, .question-card strong {
       display: block;
       margin-bottom: 8px;
       font-size: 16px;
+    }
+
+    .copy-card p, .session-card p, .question-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      white-space: pre-wrap;
     }
 
     .mini-list {
@@ -504,6 +511,22 @@ def render_app_html() -> str:
             <span class="helper">Comma-separated. This powers the gap analysis and personalized learning order.</span>
           </label>
 
+          <div class="split">
+            <label>
+              Learning intensity
+              <select id="intensity">
+                <option value="balanced">Balanced</option>
+                <option value="light">Light</option>
+                <option value="accelerated">Accelerated</option>
+                <option value="sprint">Sprint</option>
+              </select>
+            </label>
+            <label>
+              Hours per week
+              <input id="hours_per_week" type="number" min="2" max="30" value="8">
+            </label>
+          </div>
+
           <label>
             Public job posting URL
             <input id="job_url" placeholder="https://boards.greenhouse.io/...">
@@ -517,6 +540,10 @@ def render_app_html() -> str:
           <div class="button-row">
             <button class="primary" id="submit-btn" type="submit">Generate winner-mode plan</button>
             <button class="secondary" id="demo-btn" type="button">Load polished demo</button>
+          </div>
+          <div class="tool-row">
+            <button class="secondary" id="download-markdown-btn" type="button">Download markdown</button>
+            <button class="secondary" id="copy-pitch-btn" type="button">Copy elevator pitch</button>
           </div>
         </form>
 
@@ -582,6 +609,13 @@ def render_app_html() -> str:
           </article>
 
           <article class="section">
+            <div class="tag">Weekly execution</div>
+            <h4 id="weekly-title">A realistic study cadence you can actually follow</h4>
+            <p id="weekly-headline">Your weekly execution plan will appear here.</p>
+            <div class="session-grid" id="weekly-sessions"></div>
+          </article>
+
+          <article class="section">
             <div class="tag">Capstone project</div>
             <h4 id="capstone-title">A company-aligned proof of work</h4>
             <p id="capstone-pitch">Your capstone recommendation will appear here.</p>
@@ -604,6 +638,24 @@ def render_app_html() -> str:
             </div>
             <strong style="display:block;margin-top:16px;">Practice prompts</strong>
             <ul class="mini-list" id="practice-prompts"></ul>
+          </article>
+
+          <article class="section">
+            <div class="tag">Interview bank</div>
+            <h4>High-signal questions to rehearse before your next application</h4>
+            <div class="question-grid" id="interview-bank"></div>
+          </article>
+
+          <article class="section">
+            <div class="tag">Application assets</div>
+            <h4>Copy-ready material for recruiters, resume, and portfolio</h4>
+            <div class="copy-grid" id="application-assets"></div>
+          </article>
+
+          <article class="section">
+            <div class="tag">Fit signals</div>
+            <h4>How to frame this role around your strengths</h4>
+            <div class="copy-grid" id="fit-signals"></div>
           </article>
 
           <article class="section">
@@ -631,8 +683,11 @@ def render_app_html() -> str:
     const companyInput = document.getElementById("company");
     const roleInput = document.getElementById("role");
     const currentSkillsInput = document.getElementById("current_skills");
+    const intensityInput = document.getElementById("intensity");
+    const hoursPerWeekInput = document.getElementById("hours_per_week");
     const jobUrlInput = document.getElementById("job_url");
     const jobTextInput = document.getElementById("job_text");
+    let latestPlan = null;
 
     function asList(value) {
       return value ? value.split(",").map((item) => item.trim()).filter(Boolean) : [];
@@ -709,6 +764,57 @@ def render_app_html() -> str:
       });
     }
 
+    function renderCopyCards(rootId, items) {
+      const root = document.getElementById(rootId);
+      root.innerHTML = "";
+      items.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "copy-card";
+        card.innerHTML = `<strong>${item.title}</strong><p>${item.body}</p>`;
+        root.appendChild(card);
+      });
+    }
+
+    function renderWeeklySchedule(schedule) {
+      document.getElementById("weekly-title").textContent = `${schedule.intensity} plan · ${schedule.hours_per_week} hrs/week`;
+      document.getElementById("weekly-headline").textContent = schedule.headline;
+      const root = document.getElementById("weekly-sessions");
+      root.innerHTML = "";
+      schedule.sessions.forEach((session) => {
+        const card = document.createElement("article");
+        card.className = "session-card";
+        card.innerHTML = `<strong>${session.day} · ${session.focus}</strong><p>${session.duration}</p>`;
+        const list = document.createElement("ul");
+        list.className = "mini-list";
+        session.tasks.forEach((task) => {
+          const li = document.createElement("li");
+          li.textContent = task;
+          list.appendChild(li);
+        });
+        card.appendChild(list);
+        root.appendChild(card);
+      });
+    }
+
+    function renderInterviewBank(items) {
+      const root = document.getElementById("interview-bank");
+      root.innerHTML = "";
+      items.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "question-card";
+        card.innerHTML = `<strong>${item.topic}</strong>`;
+        const list = document.createElement("ul");
+        list.className = "mini-list";
+        item.questions.forEach((question) => {
+          const li = document.createElement("li");
+          li.textContent = question;
+          list.appendChild(li);
+        });
+        card.appendChild(list);
+        root.appendChild(card);
+      });
+    }
+
     function renderSkills(skills) {
       const root = document.getElementById("skills");
       root.innerHTML = "";
@@ -731,6 +837,7 @@ def render_app_html() -> str:
     }
 
     function renderPlan(plan) {
+      latestPlan = plan;
       document.getElementById("metric-role").textContent = plan.job.title;
       document.getElementById("metric-company").textContent = plan.job.company;
       document.getElementById("metric-coverage").textContent = `${plan.gap_analysis.coverage_score}%`;
@@ -756,6 +863,7 @@ def render_app_html() -> str:
       });
 
       renderRoadmap(plan.roadmap);
+      renderWeeklySchedule(plan.weekly_schedule);
       document.getElementById("capstone-title").textContent = plan.capstone.title;
       document.getElementById("capstone-pitch").textContent = plan.capstone.pitch;
       document.getElementById("capstone-outcomes").innerHTML = "<strong>Expected outcomes</strong><ul class='mini-list'>" +
@@ -764,6 +872,18 @@ def render_app_html() -> str:
       renderSimpleList("technical-focus", plan.interview_prep.technical_focus);
       renderSimpleList("behavioral-focus", plan.interview_prep.behavioral_focus);
       renderSimpleList("practice-prompts", plan.interview_prep.practice_prompts);
+      renderInterviewBank(plan.interview_bank);
+      renderCopyCards("application-assets", [
+        { title: "Elevator pitch", body: plan.application_assets.elevator_pitch },
+        { title: "Outreach note", body: plan.application_assets.outreach_note },
+        { title: "Portfolio headline", body: plan.application_assets.portfolio_headline },
+      ]);
+      renderCopyCards("fit-signals", [
+        { title: "Company signal", body: plan.fit_signals.company_signal },
+        { title: "Hiring story", body: plan.fit_signals.hiring_story },
+        { title: "Strengths to emphasize", body: plan.fit_signals.strengths.join("\\n• ").replace(/^/, "• ") },
+        { title: "Risks to manage", body: plan.fit_signals.risks.join("\\n• ").replace(/^/, "• ") },
+      ]);
       renderResumeBullets(plan.resume_bullets);
       renderSkills(plan.skills);
       results.classList.add("visible");
@@ -800,6 +920,8 @@ def render_app_html() -> str:
         job_url: jobUrlInput.value || null,
         job_text: jobTextInput.value || null,
         current_skills: asList(currentSkillsInput.value),
+        intensity: intensityInput.value,
+        hours_per_week: Number(hoursPerWeekInput.value || 8),
       });
     });
 
@@ -807,6 +929,8 @@ def render_app_html() -> str:
       companyInput.value = "Stripe";
       roleInput.value = "Junior Software Engineer";
       currentSkillsInput.value = "Python, Git, SQL";
+      intensityInput.value = "accelerated";
+      hoursPerWeekInput.value = "10";
       jobUrlInput.value = "";
       jobTextInput.value = "We are hiring a Junior Software Engineer with experience in Python, SQL, REST APIs, Git, testing, AWS, and strong problem solving. You will build backend services, contribute to internal tools, collaborate across teams, write clean code, work with PostgreSQL, and apply data structures and algorithms in production settings.";
       await submitPlan({
@@ -814,6 +938,8 @@ def render_app_html() -> str:
         role: roleInput.value,
         job_text: jobTextInput.value,
         current_skills: asList(currentSkillsInput.value),
+        intensity: intensityInput.value,
+        hours_per_week: Number(hoursPerWeekInput.value || 8),
       });
     });
 
@@ -823,6 +949,32 @@ def render_app_html() -> str:
         roleInput.value = chip.dataset.role || "";
         currentSkillsInput.value = chip.dataset.skills || "";
       });
+    });
+
+    document.getElementById("download-markdown-btn").addEventListener("click", () => {
+      if (!latestPlan) {
+        setStatus("Generate a plan first so there is something to download.", "error");
+        return;
+      }
+      const blob = new Blob([latestPlan.markdown], { type: "text/markdown;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${latestPlan.job.company}-${latestPlan.job.title}`.replace(/\\s+/g, "-").toLowerCase() + ".md";
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+
+    document.getElementById("copy-pitch-btn").addEventListener("click", async () => {
+      if (!latestPlan) {
+        setStatus("Generate a plan first so there is something to copy.", "error");
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(latestPlan.application_assets.elevator_pitch);
+        setStatus("Elevator pitch copied to your clipboard.");
+      } catch (error) {
+        setStatus("Clipboard copy failed. Try again after generating a plan.", "error");
+      }
     });
   </script>
 </body>

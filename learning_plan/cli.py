@@ -15,6 +15,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--job-url", help="Optional direct link to a public job posting")
     parser.add_argument("--job-file", help="Optional local file containing a job description")
     parser.add_argument("--current-skills", help="Optional comma-separated list of current skills")
+    parser.add_argument("--intensity", default="balanced", help="Learning intensity: light, balanced, accelerated, or sprint")
+    parser.add_argument("--hours-per-week", type=int, default=8, help="Weekly study budget in hours")
     parser.add_argument("--markdown", help="Optional path to save the plan as Markdown")
     parser.add_argument("--pdf", help="Optional path to save the plan as PDF")
     return parser.parse_args()
@@ -29,6 +31,8 @@ def main() -> int:
             job_url=args.job_url,
             job_file=args.job_file,
             current_skills=(args.current_skills.split(",") if args.current_skills else []),
+            intensity=args.intensity,
+            hours_per_week=args.hours_per_week,
         )
     except PlanGenerationError as exc:
         print(f"Error: {exc}")

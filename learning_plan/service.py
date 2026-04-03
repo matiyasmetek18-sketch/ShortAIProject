@@ -37,6 +37,8 @@ def generate_plan(
     job_file: Optional[str] = None,
     job_text: Optional[str] = None,
     current_skills: Optional[List[str]] = None,
+    intensity: str = "balanced",
+    hours_per_week: int = 8,
 ) -> LearningPlan:
     if not company or not role:
         raise PlanGenerationError('Both "company" and "role" are required.')
@@ -63,7 +65,13 @@ def generate_plan(
         )
 
     normalized_current_skills = [skill.strip() for skill in (current_skills or []) if skill.strip()]
-    return build_learning_plan(job, skills, current_skills=normalized_current_skills)
+    return build_learning_plan(
+        job,
+        skills,
+        current_skills=normalized_current_skills,
+        intensity=intensity,
+        hours_per_week=hours_per_week,
+    )
 
 
 def plan_to_dict(plan: LearningPlan) -> Dict[str, Any]:
@@ -87,6 +95,31 @@ def plan_to_dict(plan: LearningPlan) -> Dict[str, Any]:
             "coverage_score": plan.gap_analysis.coverage_score,
             "narrative": plan.gap_analysis.narrative,
         },
+        "weekly_schedule": {
+            "intensity": plan.weekly_schedule.intensity,
+            "hours_per_week": plan.weekly_schedule.hours_per_week,
+            "headline": plan.weekly_schedule.headline,
+            "sessions": [
+                {
+                    "day": session.day,
+                    "focus": session.focus,
+                    "duration": session.duration,
+                    "tasks": session.tasks,
+                }
+                for session in plan.weekly_schedule.sessions
+            ],
+        },
+        "fit_signals": {
+            "strengths": plan.fit_signals.strengths,
+            "risks": plan.fit_signals.risks,
+            "company_signal": plan.fit_signals.company_signal,
+            "hiring_story": plan.fit_signals.hiring_story,
+        },
+        "application_assets": {
+            "elevator_pitch": plan.application_assets.elevator_pitch,
+            "outreach_note": plan.application_assets.outreach_note,
+            "portfolio_headline": plan.application_assets.portfolio_headline,
+        },
         "roadmap": [
             {
                 "label": stage.label,
@@ -106,6 +139,13 @@ def plan_to_dict(plan: LearningPlan) -> Dict[str, Any]:
             "behavioral_focus": plan.interview_prep.behavioral_focus,
             "practice_prompts": plan.interview_prep.practice_prompts,
         },
+        "interview_bank": [
+            {
+                "topic": topic.topic,
+                "questions": topic.questions,
+            }
+            for topic in plan.interview_bank
+        ],
         "resume_bullets": [
             {
                 "bullet": item.bullet,

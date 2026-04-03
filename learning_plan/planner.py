@@ -3,21 +3,34 @@ from __future__ import annotations
 from typing import List
 
 from .models import (
+    ApplicationAssets,
     CapstoneProject,
+    FitSignals,
     GapAnalysis,
     InterviewPrep,
+    InterviewQuestionSet,
     JobPosting,
     LearningPlan,
     ResumeBullet,
     RoadmapStage,
     SkillPlan,
+    WeeklySchedule,
+    WeeklySession,
 )
 from .resource_catalog import resource_bundle, to_resources
 
 
-def build_learning_plan(job: JobPosting, skills: List[str], current_skills: List[str] | None = None) -> LearningPlan:
+def build_learning_plan(
+    job: JobPosting,
+    skills: List[str],
+    current_skills: List[str] | None = None,
+    intensity: str = "balanced",
+    hours_per_week: int = 8,
+) -> LearningPlan:
     skill_plans: List[SkillPlan] = []
     current_skills = current_skills or []
+    intensity = _normalize_intensity(intensity)
+    hours_per_week = max(2, min(hours_per_week, 30))
 
     for index, skill in enumerate(_ordered_skills(skills), start=1):
         bundle = resource_bundle(skill)
@@ -36,10 +49,14 @@ def build_learning_plan(job: JobPosting, skills: List[str], current_skills: List
     phases = _build_phases(job, skill_plans)
     summary = _build_summary(job, skill_plans)
     gap_analysis = _build_gap_analysis(skill_plans, current_skills)
-    roadmap = _build_roadmap(job, skill_plans, gap_analysis)
+    roadmap = _build_roadmap(job, skill_plans, gap_analysis, intensity)
     capstone = _build_capstone(job, skill_plans)
     interview_prep = _build_interview_prep(job, skill_plans, gap_analysis)
     resume_bullets = _build_resume_bullets(job, skill_plans, capstone)
+    weekly_schedule = _build_weekly_schedule(skill_plans, gap_analysis, intensity, hours_per_week)
+    fit_signals = _build_fit_signals(job, skill_plans, gap_analysis)
+    application_assets = _build_application_assets(job, skill_plans, capstone, fit_signals)
+    interview_bank = _build_interview_bank(skill_plans)
     standout_moves = _build_standout_moves(job, skill_plans, gap_analysis, capstone)
     return LearningPlan(
         job=job,
@@ -51,8 +68,17 @@ def build_learning_plan(job: JobPosting, skills: List[str], current_skills: List
         capstone=capstone,
         interview_prep=interview_prep,
         resume_bullets=resume_bullets,
+        weekly_schedule=weekly_schedule,
+        fit_signals=fit_signals,
+        application_assets=application_assets,
+        interview_bank=interview_bank,
         standout_moves=standout_moves,
     )
+
+
+def _normalize_intensity(intensity: str) -> str:
+    value = intensity.strip().lower()
+    return value if value in {"light", "balanced", "accelerated", "sprint"} else "balanced"
 
 
 def _ordered_skills(skills: List[str]) -> List[str]:
@@ -141,14 +167,22 @@ def _build_gap_analysis(skill_plans: List[SkillPlan], current_skills: List[str])
     )
 
 
-def _build_roadmap(job: JobPosting, skill_plans: List[SkillPlan], gap_analysis: GapAnalysis) -> List[RoadmapStage]:
+def _build_roadmap(
+    job: JobPosting, skill_plans: List[SkillPlan], gap_analysis: GapAnalysis, intensity: str
+) -> List[RoadmapStage]:
     first_block = [plan.skill for plan in skill_plans[:3]]
     second_block = [plan.skill for plan in skill_plans[3:6]]
     stretch_block = [plan.skill for plan in skill_plans[6:9]]
+    pace_note = {
+        "light": "at a sustainable pace",
+        "balanced": "with a healthy weekly rhythm",
+        "accelerated": "with an aggressive but manageable pace",
+        "sprint": "with maximum focus for a short window",
+    }[intensity]
     return [
         RoadmapStage(
             label="7-day sprint",
-            objective=f"Get interview-ready momentum in {', '.join(first_block) or 'core fundamentals'}.",
+            objective=f"Get interview-ready momentum in {', '.join(first_block) or 'core fundamentals'} {pace_note}.",
             deliverables=[
                 f"Finish one high-signal tutorial for {first_block[0] if first_block else 'the primary language'}.",
                 "Solve 5 targeted coding problems and write brief solution notes.",
@@ -254,3 +288,110 @@ def _build_standout_moves(
         f"Turn {gap_analysis.missing_skills[0] if gap_analysis.missing_skills else skill_plans[0].skill} into a visible proof point with a mini project or blog post.",
         "Bring one before-and-after story: what you lacked, how you learned it, and the evidence that you now own it.",
     ]
+
+
+def _build_weekly_schedule(
+    skill_plans: List[SkillPlan], gap_analysis: GapAnalysis, intensity: str, hours_per_week: int
+) -> WeeklySchedule:
+    top = [plan.skill for plan in skill_plans[:4]]
+    session_count = {
+        "light": 3,
+        "balanced": 4,
+        "accelerated": 5,
+        "sprint": 6,
+    }[intensity]
+    days = ["Monday", "Tuesday", "Thursday", "Saturday", "Sunday", "Wednesday"]
+    duration_hours = max(1, round(hours_per_week / session_count))
+    sessions: List[WeeklySession] = []
+
+    templates = [
+        ("Core skill lab", [f"Study {top[0] if top else 'the main skill'} fundamentals", "Take structured notes", "Finish one guided exercise"]),
+        ("Problem-solving block", [f"Solve two problems focused on {top[1] if len(top) > 1 else 'algorithms'}", "Review patterns and mistakes"]),
+        ("Build session", [f"Implement one feature using {top[2] if len(top) > 2 else 'role skills'}", "Commit code and update README"]),
+        ("Career assets", ["Refine resume bullets", "Practice one interview story", "Log learning wins and gaps"]),
+        ("Capstone polish", ["Improve tests, UX, or architecture", "Prepare a quick demo clip or screenshot"]),
+        ("Mock interview", ["Do one timed interview round", "Reflect on clarity, tradeoffs, and gaps"]),
+    ]
+
+    for index in range(session_count):
+        focus, tasks = templates[index]
+        sessions.append(
+            WeeklySession(
+                day=days[index],
+                focus=focus,
+                duration=f"{duration_hours} hr",
+                tasks=tasks,
+            )
+        )
+
+    missing = ", ".join(gap_analysis.missing_skills[:2]) or "role-specific gaps"
+    headline = f"A {hours_per_week}-hour {intensity} schedule focused on closing {missing} while producing visible proof of progress."
+    return WeeklySchedule(
+        intensity=intensity,
+        hours_per_week=hours_per_week,
+        headline=headline,
+        sessions=sessions,
+    )
+
+
+def _build_fit_signals(job: JobPosting, skill_plans: List[SkillPlan], gap_analysis: GapAnalysis) -> FitSignals:
+    strengths = [
+        f"The role strongly matches a growth arc in {skill_plans[0].skill}." if skill_plans else "The role is aligned with core software engineering growth.",
+        f"You already have traction in {', '.join(gap_analysis.matched_skills[:2])}." if gap_analysis.matched_skills else "The plan starts with foundational skills that are learnable quickly.",
+        f"The company context suggests this role values ownership, execution, and practical project work at {job.company}.",
+    ]
+    risks = [
+        f"Closing the gap in {gap_analysis.missing_skills[0]} will be important before interviews." if gap_analysis.missing_skills else "Maintain consistency so your strengths stay sharp.",
+        "If scraping is incomplete, use the pasted job description mode for the clearest output.",
+        "You will need visible portfolio evidence, not just coursework, to stand out.",
+    ]
+    company_signal = (
+        job.company_summary
+        or f"{job.company} appears to value engineers who can ramp quickly, collaborate well, and ship production-quality work."
+    )
+    hiring_story = (
+        f"The strongest story for this {job.title} application is: you identified the exact skills {job.company} wants, "
+        "closed the highest-risk gaps deliberately, and built proof through a capstone and crisp interview narratives."
+    )
+    return FitSignals(
+        strengths=strengths,
+        risks=risks,
+        company_signal=company_signal,
+        hiring_story=hiring_story,
+    )
+
+
+def _build_application_assets(
+    job: JobPosting, skill_plans: List[SkillPlan], capstone: CapstoneProject, fit_signals: FitSignals
+) -> ApplicationAssets:
+    top_skills = ", ".join(plan.skill for plan in skill_plans[:3]) or "core engineering skills"
+    elevator_pitch = (
+        f"I'm an early-career engineer targeting {job.title} roles, and I built {capstone.title} to prove I can contribute in "
+        f"{top_skills}. I like turning ambiguous requirements into clean, tested work and I’m especially excited about how {job.company} operates."
+    )
+    outreach_note = (
+        f"Hi, I’m exploring {job.title} opportunities at {job.company}. I used one of your role descriptions to build a focused learning roadmap "
+        f"and a capstone project called {capstone.title}. I’d love to share the demo and hear what early-career candidates do especially well in your process."
+    )
+    portfolio_headline = f"{job.title} candidate building company-specific proof of work for teams like {job.company}"
+    return ApplicationAssets(
+        elevator_pitch=elevator_pitch,
+        outreach_note=outreach_note,
+        portfolio_headline=portfolio_headline,
+    )
+
+
+def _build_interview_bank(skill_plans: List[SkillPlan]) -> List[InterviewQuestionSet]:
+    bank: List[InterviewQuestionSet] = []
+    for plan in skill_plans[:4]:
+        bank.append(
+            InterviewQuestionSet(
+                topic=plan.skill,
+                questions=[
+                    f"How have you used {plan.skill} in a project, and what tradeoffs did you make?",
+                    f"What would a beginner usually misunderstand about {plan.skill}, and how would you explain it clearly?",
+                    f"If you had one week to improve your {plan.skill} skills for an interview, what would you build or practice first?",
+                ],
+            )
+        )
+    return bank
